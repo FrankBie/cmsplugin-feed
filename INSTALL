@@ -1,0 +1,24 @@
+Thanks for downloading cmsplugin-feed.
+
+To install it, run the following command inside this directory:
+
+    python setup.py install
+
+
+Or if you'd prefer you can simply place the included ``cmsplugin_feed`` 
+directory somewhere on your Python path, or symlink to it from somewhere on
+your Python path; this is useful if your working from a Mercurial checkout.
+
+Note that this application requires Python2.3 or later, and a functional
+installation of Django 1.` or newer as well as a functional install of 
+Django-CMS 2.` Final or newer. it also requires feedparser ::
+
+    pip install feedparser
+    
+Setup
+- make sure requirements are installed and properly working
+- add 'cmsplugin_feed' to INSTALLED_APPS
+- run 'python manage.py syncdb'
+
+Settings
+CMSPLUGIN_FEED_CACHE_TIMEOUT    (Default 3600)

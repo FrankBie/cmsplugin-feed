@@ -1,0 +1,32 @@
+<h1>{{ instance.name }}</h1>
+{% if is_paginated%}
+    <div class="feed">
+        {% for item in feed_entries.object_list %}
+            <h2><a href='{{ item.link}}'>{{ item.title }}</a></h2>
+            {{ item.summary|safe }}
+        {% endfor %}
+    </div>
+    
+    <div class="pagination">
+        <span class="step-links">
+            {% if feed_entries.has_previous %}
+                <a href="?feed_{{ instance.id }}_page={{ feed_entries.previous_page_number }}">previous</a>
+            {% endif %}
+    
+            <span class="current">
+                Page {{ feed_entries.number }} of {{ feed_entries.paginator.num_pages }}.
+            </span>
+    
+            {% if feed_entries.has_next %}
+                <a href="?feed_{{ instance.id }}_page={{ feed_entries.next_page_number }}">next</a>
+            {% endif %}
+        </span>
+    </div>
+{% else %}
+    <div class="feed">
+        {% for item in feed_entries %}
+            <h2><a href='{{ item.link}}'>{{ item.title }}</a></h2>
+            {{ item.summary|safe }}
+        {% endfor %}
+    </div>
+{% endif %}
