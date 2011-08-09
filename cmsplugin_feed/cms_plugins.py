@@ -1,4 +1,6 @@
+import sys
 import feedparser
+import logging as log
 
 from django.utils.translation import ugettext as _
 from django.core.cache import cache
@@ -17,8 +19,17 @@ def get_cached_feed(instance):
     get the feed from cache if it exists else fetch it.
     """
     if not cache.has_key("feed_%s" %instance.id):
-        feed = feedparser.parse(instance.feed_url)
-        cache.set("feed_%s" %instance.id, feed, CMSPLUGIN_FEED_CACHE_TIMEOUT)
+        feed = None
+        try:
+            feed = feedparser.parse(instance.feed_url)
+            if feed is not None:
+                #log.debug("%s - put to cache" %(instance.feed_url), exc_info=True)
+                cache.set("feed_%s" %instance.id, feed, CMSPLUGIN_FEED_CACHE_TIMEOUT)
+            else:
+                return feed
+        except Exception,e:
+            #log.error("%s - feed not parseable/reachabel: %s" %(e,instance.feed_url), exc_info=True)
+            return None
     return cache.get("feed_%s" %instance.id)
     
 
@@ -32,26 +43,31 @@ class FeedPlugin(CMSPluginBase):
     def render(self, context, instance, placeholder):
         feed = get_cached_feed(instance)
         #import pdb; pdb.set_trace()
-        if instance.paginate_by:
-            is_paginated =True
-            request = context['request']
-            feed_page_param = "feed_%s_page" %str(instance.id)
+        if feed is not None:
+            if instance.paginate_by:
+                is_paginated =True
+                request = context['request']
+                feed_page_param = "feed_%s_page" %str(instance.id)
 
-            feed_paginator = Paginator(feed["entries"], instance.paginate_by) 
-            # Make sure page request is an int. If not, deliver first page.
-            try:
-                page = int(request.GET.get(feed_page_param, '1'))
-            except ValueError:
-                page = 1
-            # If page request (9999) is out of range, deliver last page of results.
-            try:
-                entries = feed_paginator.page(page)
-            except (EmptyPage, InvalidPage):
-                entries = feed_paginator.page(paginator.num_pages)
+                feed_paginator = Paginator(feed["entries"], instance.paginate_by) 
+                # Make sure page request is an int. If not, deliver first page.
+                try:
+                    page = int(request.GET.get(feed_page_param, '1'))
+                except ValueError:
+                    page = 1
+                # If page request (9999) is out of range, deliver last page of results.
+                try:
+                    entries = feed_paginator.page(page)
+                except (EmptyPage, InvalidPage):
+                    entries = feed_paginator.page(paginator.num_pages)
+            else:
+                is_paginated =False
+                entries = feed["entries"]
         else:
-            is_paginated =False
-            entries = feed["entries"]
-                    
+            # if the feed is not parseable - render no entries
+            entries = None
+            is_paginated = False
+            
         context.update({
             'instance': instance,
             'feed_entries': entries,
